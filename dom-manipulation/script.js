@@ -18,21 +18,18 @@ function showRandomQuote() {
 }
 
 function addQuote() {
-  const textInput = document.getElementById("newQuoteText");
-  const catInput  = document.getElementById("newQuoteCategory");
+  const newQuote = document.getElementById("newQuote").value;
+  const categoryInput = document.getElementById("quoteCategory").value; // from text input
+  const categorySelect = document.getElementById("categorySelect").value; // from dropdown
 
-  const text = textInput.value.trim();
-  const category = catInput.value.trim();
 
-  if (!text || !category) {
-    alert("Please enter both quote and category");
-    return;
+  const selectedCategory = categorySelect || categoryInput;
+
+  if (newQuote && selectedCategory) {
+    quotes.push({ text: newQuote, category: selectedCategory });
+    localStorage.setItem("quotes", JSON.stringify(quotes));
+    alert("Quote added!");
   }
-
-  quotes.push({ text, category });
-  textInput.value = "";
-  catInput.value = "";
-  showRandomQuote();
 }
 
 function createAddQuoteForm() {
