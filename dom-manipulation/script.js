@@ -1,4 +1,3 @@
-// ---------- data ----------
 let quotes = [
   { text: "Stay hungry, stay foolish", category: "Motivation" },
   { text: "Simplicity is the ultimate sophistication", category: "Wisdom" },
@@ -8,11 +7,9 @@ let quotes = [
 const LS_KEY = "quotes.v1";
 const FILTER_KEY = "quotes.lastFilter.v1";
 
-// ---------- base DOM refs ----------
 const quoteDisplay = document.getElementById("quoteDisplay");
 const newQuoteBtn  = document.getElementById("newQuote");
 
-// ---------- storage ----------
 function loadQuotes() {
   try {
     const raw = localStorage.getItem(LS_KEY);
@@ -25,7 +22,6 @@ function saveQuotes() {
   localStorage.setItem(LS_KEY, JSON.stringify(quotes));
 }
 
-// ---------- render ----------
 function getFilteredQuotes() {
   const sel = document.getElementById("categoryFilter");
   const cat = sel ? sel.value : "all";
@@ -44,7 +40,6 @@ function showRandomQuote() {
   quoteDisplay.innerHTML = `"${q.text}" — [${q.category}]`;
 }
 
-// ---------- add-quote form ----------
 function createAddQuoteForm() {
   const section = document.createElement("section");
 
@@ -76,7 +71,7 @@ function createAddQuoteForm() {
 function addQuote() {
   const textEl = document.getElementById("newQuoteText");
   const inputCatEl = document.getElementById("newQuoteCategory");
-  const selectEl = document.getElementById("categorySelect"); // if you later add a dropdown for adding
+  const selectEl = document.getElementById("categorySelect");
   const selectedCategory = (selectEl && selectEl.value) || inputCatEl.value.trim();
 
   const text = (textEl?.value || "").trim();
@@ -95,7 +90,6 @@ function addQuote() {
   filterQuotes();
 }
 
-// ---------- filter dropdown ----------
 function populateCategories() {
   const sel = document.getElementById("categoryFilter");
   if (!sel) return;
@@ -124,7 +118,6 @@ function filterQuotes() {
   showRandomQuote();
 }
 
-// ---------- import / export ----------
 function exportToJsonFile() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -136,6 +129,7 @@ function exportToJsonFile() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+document.getElementById("exportBtn")?.addEventListener("click", exportToJsonFile);
 
 function importFromJsonFile(event) {
   const file = event.target.files && event.target.files[0];
@@ -160,7 +154,6 @@ function importFromJsonFile(event) {
   reader.readAsText(file);
 }
 
-// ---------- server I/O required by grader ----------
 async function fetchQuotesFromServer() {
   try {
     const response = await fetch("https://jsonplaceholder.typicode.com/posts");
@@ -201,15 +194,15 @@ function syncQuotes() {
     body: JSON.stringify(quotes)
   })
     .then(r => r.json())
-    .then(data => console.log("Quotes synced:", data))
+    .then(() => fetchQuotesFromServer())
     .catch(err => console.error("Error syncing quotes:", err));
 }
 
-// ---------- wire-up ----------
 newQuoteBtn.addEventListener("click", showRandomQuote);
 
-// boot
 loadQuotes();
 createAddQuoteForm();
 populateCategories();
 filterQuotes();
+
+setInterval(syncQuotes, 30000);
