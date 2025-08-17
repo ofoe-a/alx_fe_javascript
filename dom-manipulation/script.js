@@ -80,7 +80,7 @@ const LS_KEY = "quotes.v1";
       // refresh UI to reflect stored data
       showRandomQuote();
     }
-  } catch (_) { /* ignore parse errors and keep seed quotes */ }
+  } catch (_) { }
 })();
 
 // persist current quotes array
@@ -88,28 +88,28 @@ function saveQuotes() {
   localStorage.setItem(LS_KEY, JSON.stringify(quotes));
 }
 
-// ensure saves happen after clicking "Add Quote" (without changing your original function)
+
 document.addEventListener("click", (e) => {
   if (e.target && e.target.id === "addQuote") {
-    // your addQuote() has already pushed; just persist the new state
+   
     saveQuotes();
   }
 });
 
-// Export: download quotes as JSON
+
 function exportToJsonFile() {
   const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "quotes-export.json";
-  document.body.appendChild(a);        // ensure it's in the DOM for Firefox
+  document.body.appendChild(a);       
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-// Import: read JSON file and merge/append into quotes, then persist
+
 function importFromJsonFile(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
@@ -119,18 +119,116 @@ function importFromJsonFile(event) {
     try {
       const imported = JSON.parse(e.target.result);
       if (!Array.isArray(imported)) throw new Error("Invalid JSON");
-      quotes.push(...imported);        // append
-      saveQuotes();                    // persist
-      showRandomQuote();               // update UI
+      quotes.push(...imported);        
+      saveQuotes();                    
+      showRandomQuote();               
       alert("Quotes imported successfully!");
     } catch {
       alert("Invalid JSON file.");
     } finally {
-      event.target.value = "";         // reset file input
+      event.target.value = "";        
     }
   };
   reader.readAsText(file);
 }
 
-// wire export button
+
 document.getElementById("exportBtn")?.addEventListener("click", exportToJsonFile);
+
+
+const FILTER_KEY = "quotes.lastFilter.v1";
+
+
+function populateCategories() {
+  const sel = document.getElementById("categoryFilter");
+  if (!sel) return;
+
+  const saved = localStorage.getItem(FILTER_KEY) || "all";
+  const categories = Array.from(new Set(quotes.map(q => q.category))).sort();
+
+  // reset options
+  sel.innerHTML = "";
+  // "All" option
+  const allOpt = document.createElement("option");
+  allOpt.value = "all";
+  allOpt.textContent = "All Categories";
+  sel.appendChild(allOpt);
+
+  // category options
+  categories.forEach(cat => {
+    const opt = document.createElement("option");
+    opt.value = cat;
+    opt.textContent = cat;
+    sel.appendChild(opt);
+  });
+
+  // restore last selected (fallback to 'all' if not present)
+  sel.value = categories.includes(saved) || saved === "all" ? saved : "all";
+}
+
+// Return quotes according to current filter
+function getFilteredQuotes() {
+  const sel = document.getElementById("categoryFilter");
+  const cat = sel ? sel.value : "all";
+  return cat === "all" ? quotes : quotes.filter(q => q.category === cat);
+}
+
+
+function filterQuotes() {
+  const sel = document.getElementById("categoryFilter");
+  if (!sel) return;
+  localStorage.setItem(FILTER_KEY, sel.value);
+  showRandomQuote();   // re-render with the filter applied
+}
+
+// Override the previous showRandomQuote so "Show New Quote" respects the filter.
+
+function showRandomQuote() {
+  const list = getFilteredQuotes();
+  if (list.length === 0) {
+    const sel = document.getElementById("categoryFilter");
+    const cat = sel ? sel.value : "all";
+    quoteDisplay.innerHTML = cat === "all"
+      ? "No quotes available!"
+      : `No quotes in the “${cat}” category.`;
+    return;
+  }
+  const idx = Math.floor(Math.random() * list.length);
+  const q = list[idx];
+  quoteDisplay.innerHTML = `"${q.text}" — [${q.category}]`;
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "addQuote") {
+    populateCategories();
+    filterQuotes();
+  }
+});
+
+
+function importFromJsonFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error("Invalid JSON");
+      quotes.push(...imported);
+      saveQuotes?.();                 
+      populateCategories();           
+      filterQuotes();                  
+      alert("Quotes imported successfully!");
+    } catch {
+      alert("Invalid JSON file.");
+    } finally {
+      event.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Initialize filter dropdown on load and render
+populateCategories();
+filterQuotes();   

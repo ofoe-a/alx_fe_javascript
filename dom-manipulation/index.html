@@ -10,7 +10,11 @@
     <div id="quoteDisplay"></div>
     <button id="newQuote">Show New Quote</button>
     <button id="exportBtn">Export Quotes</button>
-<input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
+    <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
+    <select id="categoryFilter" onchange="filterQuotes()">
+    <option value="all">All Categories</option>
+
+    </select>
     <script src="script.js"></script>
   </body>
   </html>
