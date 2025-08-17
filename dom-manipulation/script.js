@@ -229,3 +229,33 @@ function importFromJsonFile(event) {
 // Initialize filter dropdown on load and render
 populateCategories();
 filterQuotes();   
+
+// Function to fetch quotes from server
+async function fetchQuotesFromServer() {
+  try {
+    // Using JSONPlaceholder or another mock API
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts"); 
+    
+    if (!response.ok) {
+      throw new Error("Failed to fetch quotes from server");
+    }
+
+    const data = await response.json();
+
+    // Example: map to quotes (adjust depending on your data structure)
+    const quotes = data.map(item => ({
+      id: item.id,
+      text: item.title,
+      author: "Server" // placeholder author
+    }));
+
+    // Store in localStorage for sync
+    localStorage.setItem("quotes", JSON.stringify(quotes));
+
+    console.log("Quotes synced from server:", quotes);
+    return quotes;
+  } catch (error) {
+    console.error("Error fetching quotes:", error);
+    return [];
+  }
+}
