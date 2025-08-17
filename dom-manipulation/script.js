@@ -67,3 +67,70 @@ newQuoteBtn.addEventListener("click", showRandomQuote);
 
 createAddQuoteForm();
 showRandomQuote();
+
+const LS_KEY = "quotes.v1";
+
+// load from localStorage (if present) and re-render
+(function initFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const loaded = JSON.parse(raw);
+      if (Array.isArray(loaded)) quotes = loaded;
+      // refresh UI to reflect stored data
+      showRandomQuote();
+    }
+  } catch (_) { /* ignore parse errors and keep seed quotes */ }
+})();
+
+// persist current quotes array
+function saveQuotes() {
+  localStorage.setItem(LS_KEY, JSON.stringify(quotes));
+}
+
+// ensure saves happen after clicking "Add Quote" (without changing your original function)
+document.addEventListener("click", (e) => {
+  if (e.target && e.target.id === "addQuote") {
+    // your addQuote() has already pushed; just persist the new state
+    saveQuotes();
+  }
+});
+
+// Export: download quotes as JSON
+function exportToJsonFile() {
+  const blob = new Blob([JSON.stringify(quotes, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "quotes-export.json";
+  document.body.appendChild(a);        // ensure it's in the DOM for Firefox
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Import: read JSON file and merge/append into quotes, then persist
+function importFromJsonFile(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (!Array.isArray(imported)) throw new Error("Invalid JSON");
+      quotes.push(...imported);        // append
+      saveQuotes();                    // persist
+      showRandomQuote();               // update UI
+      alert("Quotes imported successfully!");
+    } catch {
+      alert("Invalid JSON file.");
+    } finally {
+      event.target.value = "";         // reset file input
+    }
+  };
+  reader.readAsText(file);
+}
+
+// wire export button
+document.getElementById("exportBtn")?.addEventListener("click", exportToJsonFile);
