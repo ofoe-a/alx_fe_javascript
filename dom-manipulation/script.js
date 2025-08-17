@@ -88,6 +88,7 @@ function addQuote() {
 
   populateCategories();
   filterQuotes();
+  postQuoteToServer(text);
 }
 
 function populateCategories() {
@@ -194,7 +195,10 @@ function syncQuotes() {
     body: JSON.stringify(quotes)
   })
     .then(r => r.json())
-    .then(() => fetchQuotesFromServer())
+    .then(() => {
+      console.log("Quotes synced with server!");
+      return fetchQuotesFromServer();
+    })
     .catch(err => console.error("Error syncing quotes:", err));
 }
 
